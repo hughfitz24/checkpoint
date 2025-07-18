@@ -12,7 +12,7 @@ type HealthCheckResult struct {
 	Status   string // UP or DOWN
 	Latency  time.Duration // Latency (RTT)
 	HTTPCode int // HTTP error code returned
-	Error    string // Error (if error occured)
+	Error    string // Error (if error occurred)
 }
 
 // HealthChecker performs health checks on URLs

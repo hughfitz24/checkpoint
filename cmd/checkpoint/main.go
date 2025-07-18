@@ -52,10 +52,15 @@ func main() {
 	for _, result := range allResults {
 		totalLatency += result.Latency
 		if result.Status != "UP" {
+			// Placeholder for handling non-UP statuses in the future.
 		}
 	}
 
-	avgLatency := totalLatency / time.Duration(len(allResults))
-	fmt.Printf("\nSummary: Average latency: %.2fms\n",
-		float64(avgLatency.Nanoseconds())/1000000)
+	if len(allResults) > 0 {
+		avgLatency := totalLatency / time.Duration(len(allResults))
+		fmt.Printf("\nSummary: Average latency: %.2fms\n",
+			float64(avgLatency.Nanoseconds())/1000000)
+	} else {
+		fmt.Println("\nSummary: No results to calculate average latency.")
+	}
 }

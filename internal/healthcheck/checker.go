@@ -67,7 +67,7 @@ func (hc *HealthChecker) CheckURLs(urls []string) []HealthCheckResult {
 // PrintResults prints the formatted health check results
 func PrintResults(results []HealthCheckResult) {
 	fmt.Printf("%-40s %-8s %-12s %-8s %s\n", "URL", "Status", "Latency", "HTTP", "Error")
-	fmt.Println(string(make([]rune, 80)))
+	fmt.Println(strings.Repeat("-", 80))
 
 	for _, result := range results {
 		latencyStr := fmt.Sprintf("%.2fms", float64(result.Latency.Nanoseconds())/1000000)
