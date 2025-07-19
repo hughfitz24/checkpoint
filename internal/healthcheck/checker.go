@@ -10,20 +10,6 @@ import (
 	"github.com/hughfitz24/checkpoint/internal/config"
 )
 
-// Converts YamlConfig object to a HealthCheckConfig
-
-func ConvertConfig(yamlConfig config.YamlConfig) HealthCheckConfig {
-	URLs := []string{}
-	healthCheckConfig := HealthCheckConfig{}
-
-	for _, endpoint := range yamlConfig.Endpoints {
-		URLs = append(URLs, yamlConfig.URL+endpoint)
-	}
-
-	healthCheckConfig.URLs = URLs
-	healthCheckConfig.Timeout = time.Second * time.Duration(yamlConfig.Timeout)
-	return healthCheckConfig
-}
 
 // CheckURL performs a health check on a single URL
 // Method on HealthChecker struct
@@ -53,7 +39,7 @@ func (hc *HealthChecker) CheckURL(url string) HealthCheckResult {
 	// Consider 2xx and 3xx status codes as healthy
 	if resp.StatusCode >= 200 && resp.StatusCode < 400 {
 		result.Status = "UP"
-		result.Error = "N/A"
+		result.Error = ""
 	} else {
 		result.Status = "DOWN"
 		result.Error = fmt.Sprintf("HTTP %d", resp.StatusCode)
@@ -115,7 +101,7 @@ func NewHealthChecker(timeout time.Duration) *HealthChecker {
 }
 
 // RunHealthChecks runs health checks with the given configuration
-func RunHealthChecks(config HealthCheckConfig) []HealthCheckResult {
+func RunHealthChecks(config *config.HealthCheckConfig) []HealthCheckResult {
 	checker := NewHealthChecker(config.Timeout) // Define checker
 	return checker.CheckURLs(config.URLs)
 }

@@ -15,17 +15,14 @@ func main() {
 	yamlConfig, err := config.ReadYamlConfig(configFile)
 	if err != nil {
 		fmt.Println("err: ", err)
+		return
 	}
 
-	config := healthcheck.ConvertConfig(yamlConfig)
-
-	// 	for _, endpoint := range endpoints {
-	// 		urls = append(urls, api + endpoint)
-	// 	}
-	// 	config := healthcheck.HealthCheckConfig{
-	// 		URLs:    urls,
-	// 		Timeout: 5 * time.Second,
-	// 	}
+	cfg, err := config.ConvertConfig(yamlConfig)
+	if err != nil {
+		fmt.Println("err: ", err)
+		return
+	}
 
 	fmt.Println("Running health checks...")
 
@@ -37,7 +34,7 @@ func main() {
 
 	for range ticker.C {
 
-		results := healthcheck.RunHealthChecks(config)
+		results := healthcheck.RunHealthChecks(cfg)
 
 		allResults = append(allResults, results...)
 

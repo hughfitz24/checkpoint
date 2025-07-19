@@ -22,9 +22,4 @@ type HealthChecker struct {
 }
 
 
-// HealthCheckConfig holds configuration for batch health checks
-type HealthCheckConfig struct {
-	URLs    []string // String of URLs to process
-	Timeout time.Duration // Timeout (standard for each endpoint)
-}
 

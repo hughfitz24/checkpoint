@@ -4,4 +4,4 @@ endpoints:
   - /comments
   # - /albums
   - /todos
-timeout: 5 # seconds
+timeout: 1000 # ms
