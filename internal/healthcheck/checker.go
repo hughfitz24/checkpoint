@@ -2,25 +2,44 @@ package healthcheck
 
 import (
 	"fmt"
-	"time"
+	"net/http"
+	"strings"
 	"sync"
+	"time"
+
+	"github.com/hughfitz24/checkpoint/internal/config"
 )
+
+// Converts YamlConfig object to a HealthCheckConfig
+
+func ConvertConfig(yamlConfig config.YamlConfig) HealthCheckConfig {
+	URLs := []string{}
+	healthCheckConfig := HealthCheckConfig{}
+
+	for _, endpoint := range yamlConfig.Endpoints {
+		URLs = append(URLs, yamlConfig.URL+endpoint)
+	}
+
+	healthCheckConfig.URLs = URLs
+	healthCheckConfig.Timeout = time.Second * time.Duration(yamlConfig.Timeout)
+	return healthCheckConfig
+}
 
 // CheckURL performs a health check on a single URL
 // Method on HealthChecker struct
 func (hc *HealthChecker) CheckURL(url string) HealthCheckResult {
 	// Start of healthcheck
 	start := time.Now()
-    // Perform request on URL
+	// Perform request on URL
 	resp, err := hc.client.Get(url)
 	// Get RTT
 	latency := time.Since(start)
-    // Define result as HealthCheckResult struct
+	// Define result as HealthCheckResult struct
 	result := HealthCheckResult{
 		URL:     url,
 		Latency: latency,
 	}
-    // If error occurs, raise DOWN alert
+	// If error occurs, raise DOWN alert
 	if err != nil {
 		result.Status = "DOWN"
 		result.Error = err.Error()
@@ -50,7 +69,7 @@ func (hc *HealthChecker) CheckURLs(urls []string) []HealthCheckResult {
 	var wg sync.WaitGroup
 	// Create slice with same length as input URL list
 	results := make([]HealthCheckResult, len(urls))
-    // Iterate over each url, start a goroutine for each URL
+	// Iterate over each url, start a goroutine for each URL
 	for i, url := range urls {
 		wg.Add(1)
 		// Start goroutine
@@ -85,10 +104,14 @@ func PrintResults(results []HealthCheckResult) {
 	}
 }
 
-// HealthCheckConfig holds configuration for batch health checks
-type HealthCheckConfig struct {
-	URLs    []string // String of URLs to process
-	Timeout time.Duration // Timeout (standard for each endpoint)
+// NewHealthChecker creates a new health checker with configurable timeout
+func NewHealthChecker(timeout time.Duration) *HealthChecker {
+	return &HealthChecker{ // Create a new HealthChecker struct
+		client: &http.Client{ // client
+			Timeout: timeout, // timeout of client is passed as input
+		},
+		timeout: timeout, // Make timeout value directly accessible from struct
+	}
 }
 
 // RunHealthChecks runs health checks with the given configuration
