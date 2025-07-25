@@ -53,8 +53,9 @@ func ConvertConfig(yamlConfig *YamlConfig) (*HealthCheckConfig, error) {
 
 func (hc *HealthCheckConfig) Validate() error {
 	for _, urlStr := range hc.URLs {
-		if _, err := url.Parse(urlStr); err != nil {
-			return fmt.Errorf("invalid URL generated: %w", err)
+		parsedURL, err := url.Parse(urlStr)
+		if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
+			return fmt.Errorf("invalid URL generated: %s (error: %w)", urlStr, err)
 		}
 	}
 	return nil
