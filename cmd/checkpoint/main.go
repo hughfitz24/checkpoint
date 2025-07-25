@@ -3,41 +3,45 @@ package main
 import (
 	"fmt"
 	"time"
+
+	"github.com/hughfitz24/checkpoint/internal/config"
 	"github.com/hughfitz24/checkpoint/internal/healthcheck"
 )
 
 func main() {
-	// Example usage
-	urls := []string{
-		"https://google.com",
-		"https://github.com",
-		// "https://httpbin.org/status/200",
-		// "https://httpbin.org/status/500",
-		// "https://httpbin.org/delay/2",
-		// "https://nonexistent-url-12345.com",
+
+	configFile := "configs/test.yml"
+
+	yamlConfig, err := config.ReadYamlConfig(configFile)
+	if err != nil {
+		fmt.Println("err: ", err)
+		return
 	}
 
-	config := healthcheck.HealthCheckConfig{
-		URLs:    urls,
-		Timeout: 5 * time.Second,
+	cfg, err := config.ConvertConfig(yamlConfig)
+	if err != nil {
+		fmt.Println("err: ", err)
+		return
 	}
 
 	fmt.Println("Running health checks...")
 
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(50 * time.Millisecond)
 	defer ticker.Stop() // Clean up
-	const maxIterations = 20
+	const maxIterations = 100
 	iteration := 0
 	var allResults []healthcheck.HealthCheckResult
+	fmt.Printf("%-40s %-8s %-12s %-8s %s\n", "URL", "Status", "Latency", "HTTP", "Error")
 
 	for range ticker.C {
-		fmt.Println("Tick at", time.Now())
 
-		results := healthcheck.RunHealthChecks(config)
-		fmt.Println("\nResults:")
-		healthcheck.PrintResults(results)
+		results := healthcheck.RunHealthChecks(cfg)
 
 		allResults = append(allResults, results...)
+
+		if iteration%10 == 0 {
+			healthcheck.PrintResults(results)
+		}
 
 		iteration++
 		if iteration >= maxIterations {
