@@ -35,16 +35,19 @@ func ReadYamlConfig(filename string) (*YamlConfig, error) {
 // ConvertConfig converts a YamlConfig struct to a HealthCheckConfig struct.
 
 func ConvertConfig(yamlConfig *YamlConfig) (*HealthCheckConfig, error) {
-	URLs := make([]string, 0, len(yamlConfig.Endpoints))
+	URLs := make([]map[string]string, 0, len(yamlConfig.Endpoints))
 	baseURL := strings.TrimSuffix(yamlConfig.URL, "/")
 	cfg := HealthCheckConfig{}
 
 	for _, endpoint := range yamlConfig.Endpoints {
-		joinedURL, err := url.JoinPath(baseURL, endpoint)
+		urlMap := make(map[string]string)
+		joinedURL, err := url.JoinPath(baseURL, endpoint["endpoint"])
 		if err != nil {
 			return nil, fmt.Errorf("config/parser: error joining URL path: %w", err)
 		}
-		URLs = append(URLs, joinedURL)
+		urlMap["url"] = joinedURL
+		urlMap["method"] = endpoint["method"]
+		URLs = append(URLs, urlMap)
 	}
 
 	cfg.URLs = URLs
@@ -57,7 +60,7 @@ func ConvertConfig(yamlConfig *YamlConfig) (*HealthCheckConfig, error) {
 
 func (hc *HealthCheckConfig) Validate() error {
 	for _, urlStr := range hc.URLs {
-		parsedURL, err := url.Parse(urlStr)
+		parsedURL, err := url.Parse(urlStr["url"])
 		if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
 			return fmt.Errorf("config/parser: invalid URL generated: %s (error: %w)", urlStr, err)
 		}

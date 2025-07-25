@@ -8,7 +8,7 @@ import (
 // Type definition
 // HealthCheckResult represents the result of a health check
 type HealthCheckResult struct {
-	URL      string // The URL tested
+	Request      string // The request made. Method and URL
 	Status   string // UP or DOWN
 	Latency  time.Duration // Latency (RTT)
 	HTTPCode int // HTTP error code returned

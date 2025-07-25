@@ -31,7 +31,7 @@ func main() {
 	const maxIterations = 100
 	iteration := 0
 	var allResults []healthcheck.HealthCheckResult
-	fmt.Printf("%-40s %-8s %-12s %-8s %s\n", "URL", "Status", "Latency", "HTTP", "Error")
+	fmt.Printf("%-60s %-8s %-12s %-8s %s\n", "Request", "Status", "Latency", "HTTP", "Error")
 
 	for range ticker.C {
 

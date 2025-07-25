@@ -11,18 +11,42 @@ import (
 )
 
 
-// CheckURL performs a health check on a single URL
+// CheckURL performs a health check on a single URL. A requestConfig map is passed as input, which contains the URL, method, and body (if applicable).
 // Method on HealthChecker struct
-func (hc *HealthChecker) CheckURL(url string) HealthCheckResult {
+func (hc *HealthChecker) CheckURL(requestConfig map[string]string)HealthCheckResult {
+	url := requestConfig["url"] // Get URL from requestConfig
+	method := requestConfig["method"] // Get method from requestConfig
+	// Warm http client, so connection is cached by client before timed requests are made. 
+	hc.client.Get(url)
+	// Perform request on URL depending on method
+	var resp *http.Response
+	var err error
 	// Start of healthcheck
-	start := time.Now()
-	// Perform request on URL
-	resp, err := hc.client.Get(url)
+	start := time.Time{}
+	switch strings.ToUpper(method) {
+		case "GET":
+		// If method is GET, use http.GET
+			start = time.Now() // Start time for latency calculation
+			resp, err = hc.client.Get(url)
+		case "POST":
+		// If method is POST, use http.POST
+			reader := strings.NewReader(requestConfig["body"]) // Get body from requestConfig
+			start = time.Now() // Start time for latency calculation
+			resp, err = hc.client.Post(url, "application/json", reader)
+		default:
+			// If method is not recognized, return error
+			return HealthCheckResult{
+				Request:  fmt.Sprintf("%s %s", method, url), // Format request string
+				Status:  "DOWN",
+				Latency: 0,
+				Error:   fmt.Sprintf("Unsupported method: %s", method),
+			}
+		}
 	// Get RTT
 	latency := time.Since(start)
 	// Define result as HealthCheckResult struct
 	result := HealthCheckResult{
-		URL:     url,
+		Request:  fmt.Sprintf("%s %s", method, url), // Format request string
 		Latency: latency,
 	}
 	// If error occurs, raise DOWN alert
@@ -50,7 +74,7 @@ func (hc *HealthChecker) CheckURL(url string) HealthCheckResult {
 
 // CheckURLs performs health checks on multiple URLs concurrently
 // Method on HealthChecker struct
-func (hc *HealthChecker) CheckURLs(urls []string) []HealthCheckResult {
+func (hc *HealthChecker) CheckURLs(urls []map[string]string) []HealthCheckResult {
 	// Create waitGroup, co-ordinating goroutines
 	var wg sync.WaitGroup
 	// Create slice with same length as input URL list
@@ -59,7 +83,7 @@ func (hc *HealthChecker) CheckURLs(urls []string) []HealthCheckResult {
 	for i, url := range urls {
 		wg.Add(1)
 		// Start goroutine
-		go func(index int, u string) {
+		go func(index int, u map[string]string) {
 			defer wg.Done()
 			results[index] = hc.CheckURL(u)
 		}(i, url)
@@ -71,7 +95,7 @@ func (hc *HealthChecker) CheckURLs(urls []string) []HealthCheckResult {
 
 // PrintResults prints the formatted health check results
 func PrintResults(results []HealthCheckResult) {
-	fmt.Println(strings.Repeat("-", 80))
+	fmt.Println(strings.Repeat("-", 100))
 
 	for _, result := range results {
 		latencyStr := fmt.Sprintf("%.2fms", float64(result.Latency.Nanoseconds())/1000000)
@@ -80,8 +104,8 @@ func PrintResults(results []HealthCheckResult) {
 			httpStr = fmt.Sprintf("%d", result.HTTPCode)
 		}
 
-		fmt.Printf("%-40s %-8s %-12s %-8s %s\n",
-			result.URL,
+		fmt.Printf("%-60s %-8s %-12s %-8s %s\n",
+			result.Request,
 			result.Status,
 			latencyStr,
 			httpStr,
