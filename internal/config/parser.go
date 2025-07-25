@@ -40,7 +40,11 @@ func ConvertConfig(yamlConfig *YamlConfig) (*HealthCheckConfig, error) {
 	cfg := HealthCheckConfig{}
 
 	for _, endpoint := range yamlConfig.Endpoints {
-		URLs = append(URLs, baseURL+endpoint)
+		joinedURL, err := url.JoinPath(baseURL, endpoint)
+		if err != nil {
+			return nil, fmt.Errorf("error joining URL path: %w", err)
+		}
+		URLs = append(URLs, joinedURL)
 	}
 
 	cfg.URLs = URLs
