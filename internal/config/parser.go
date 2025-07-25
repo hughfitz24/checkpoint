@@ -32,7 +32,7 @@ func ReadYamlConfig(filename string) (*YamlConfig, error) {
 	return &config, nil
 }
 
-// ConvertConfig converst a YamlConfig struct to a HealthCheckConfig struct.
+// ConvertConfig converts a YamlConfig struct to a HealthCheckConfig struct.
 
 func ConvertConfig(yamlConfig *YamlConfig) (*HealthCheckConfig, error) {
 	URLs := make([]string, 0, len(yamlConfig.Endpoints))
